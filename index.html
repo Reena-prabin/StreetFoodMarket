@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vibrant StreetFood Market</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>🌈 Street Food Cart Paradise 🌮</h1>
+    <div id="authBlock">
+      <h2>Sign Up / Login</h2>
+      <input id="email" type="email" placeholder="Email">
+      <input id="password" type="password" placeholder="Password">
+      <div class="btn-row">
+        <button onclick="signUp()">Sign Up</button>
+        <button onclick="signIn()">Login</button>
+        <button onclick="signOut()">Log Out</button>
+      </div>
+    </div>
+
+    <div id="mainApp" style="display:none;">
+      <h2>Available Street Food Items</h2>
+      <ul id="itemList">
+        <!-- JS will populate items here -->
+      </ul>
+      <h2>🛒 Your Cart</h2>
+      <ul id="cartList"></ul>
+      <div class="bill-box">
+        <strong>Total: ₹<span id="cartTotal">0</span></strong>
+        <button id="billBtn" onclick="showBill()" style="margin-left:18px;">Checkout & Bill</button>
+      </div>
+      <div id="billSection" style="display:none;">
+        <h3>🧾 Bill</h3>
+        <div id="billDetails"></div>
+        <button onclick="resetCart()" class="clear-btn">Clear Cart</button>
+      </div>
+    </div>
+  </div>
+  <!-- Firebase config + app logic -->
+  <script>
+    // <<<--- PUT YOUR OWN CONFIG BELOW  --->>>
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Demo menu items
+    const FOOD_ITEMS = [
+      { id: 1, name: "Masala Dosa", price: 60 },
+      { id: 2, name: "Pani Puri", price: 35 },
+      { id: 3, name: "Vada Pav", price: 25 },
+      { id: 4, name: "Chole Bhature", price: 75 },
+      { id: 5, name: "Egg Roll", price: 50 },
+      { id: 6, name: "Samosa", price: 15 }
+    ];
+    let cart = [];
+
+    function renderItems() {
+      const ul = document.getElementById('itemList');
+      ul.innerHTML = '';
+      FOOD_ITEMS.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span>${item.name} <b>₹${item.price}</b></span>
+          <button onclick="addToCart(${item.id})">Add to Cart</button>
+        `;
+        ul.appendChild(li);
+      });
+    }
+
+    function addToCart(id) {
+      const item = FOOD_ITEMS.find(x => x.id === id);
+      const found = cart.find(x => x.id === id);
+      if (found) found.qty += 1;
+      else cart.push({ ...item, qty: 1 });
+      renderCart();
+    }
+
+    function renderCart() {
+      const ul = document.getElementById('cartList');
+      ul.innerHTML = '';
+      let total = 0;
+      cart.forEach((item, idx) => {
+        total += item.price * item.qty;
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span>${item.name} ×${item.qty} <b>₹${item.price * item.qty}</b></span>
+          <button class="qty-btn" onclick="changeQty(${idx}, 1)">+</button>
+          <button class="qty-btn" onclick="changeQty(${idx}, -1)">-</button>
+        `;
+        ul.appendChild(li);
+      });
+      document.getElementById('cartTotal').innerText = total;
+    }
+
+    function changeQty(idx, diff) {
+      cart[idx].qty += diff;
+      if (cart[idx].qty <= 0) cart.splice(idx,1);
+    }
